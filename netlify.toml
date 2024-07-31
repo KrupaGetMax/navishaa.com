@@ -1,0 +1,13 @@
+[build]
+  functions = "routes"
+  command = "npm install"
+
+[[redirects]]
+  from = "/submit-form"
+  to = "/.netlify/functions/submitForm"
+  status = 200
+
+[[redirects]]
+  from = "/send-email"
+  to = "/.netlify/functions/sendEmail"
+  status = 200
