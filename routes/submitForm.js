@@ -65,7 +65,28 @@ exports.handler = async function (event, context) {
       requirement,
     } = JSON.parse(event.body);
 
-    // Configure your SMTP transport
+    // Validate input fields
+    if (
+      !email ||
+      !companyName ||
+      !country ||
+      !fullName ||
+      !jobTitle ||
+      !mobileNumber ||
+      !enquiryType ||
+      !requirement
+    ) {
+      return {
+        statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+        body: JSON.stringify({ error: "Missing required fields" }),
+      };
+    }
+
     let transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
@@ -74,10 +95,9 @@ exports.handler = async function (event, context) {
       },
     });
 
-    // Email options
     let mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: "process.env.TO_EMAIL",
+      from: process.env.EMAIL_USER, // Sender's email address
+      to: "process.env.TO_EMAIL", // Recipient's email address
       subject: "New Form Submission",
       text: `
         Company Name: ${companyName}
@@ -92,13 +112,14 @@ exports.handler = async function (event, context) {
     };
 
     try {
+      console.log("Sending email with the following options:", mailOptions);
       await transporter.sendMail(mailOptions);
       return {
         statusCode: 200,
         headers: {
-          "Access-Control-Allow-Origin": "*", // Allow all origins
-          "Access-Control-Allow-Methods": "OPTIONS, POST, GET", // Allow specific methods
-          "Access-Control-Allow-Headers": "Content-Type", // Allow specific headers
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Headers": "Content-Type",
         },
         body: JSON.stringify({ message: "Form submitted successfully!" }),
       };
