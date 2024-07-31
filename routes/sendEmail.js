@@ -78,91 +78,21 @@
 
 // module.exports = router;
 // =======================================================
-// const nodemailer = require("nodemailer");
-// require("dotenv").config();
-// const multer = require("multer");
+// const AWS = require('aws-sdk');
+// const nodemailer = require('nodemailer');
+// require('dotenv').config();
 
-// const storage = multer.memoryStorage();
-// const upload = multer({ storage });
-
-// exports.handler = async (event) => {
-//   const { fullName, email, position, experience, education, english, casteCertificate, salary } = JSON.parse(event.body);
-
-//   const resume = event?.files?.resume;
-
-//   if (!resume) {
-//     return {
-//       statusCode: 400,
-//       body: JSON.stringify({ error: "No resume file uploaded." }),
-//     };
-//   }
-
-//   // Create reusable transporter object using the default SMTP transport
-//   const transporter = nodemailer.createTransport({
-//     host: process.env.SMTP_HOST,
-//     port: process.env.SMTP_PORT,
-//     auth: {
-//       user: process.env.EMAIL_USER,
-//       pass: process.env.EMAIL_PASS,
-//     },
-//   });
-
-//   const mailOptions = {
-//     from: process.env.EMAIL_USER,
-//     to: process.env.TO_EMAIL,
-//     subject: `Job Application: ${position}`,
-//     text: `
-//       Full Name: ${fullName}
-//       Email: ${email}
-//       Position: ${position}
-//       Experience: ${experience}
-//       Education: ${education}
-//       English: ${english}
-//       Caste Certificate: ${casteCertificate}
-//       Last In-Hand Monthly Salary: ${salary}
-//     `,
-//     attachments: [
-//       {
-//         filename: resume.originalname,
-//         content: resume.buffer,
-//       },
-//     ],
-//   };
-
-//   try {
-//     await transporter.sendMail(mailOptions);
-//     return {
-//       statusCode: 200,
-//       body: JSON.stringify({ message: "Job application email sent successfully!" }),
-//     };
-//   } catch (error) {
-//     console.error("Error sending email:", error);
-//     return {
-//       statusCode: 500,
-//       body: JSON.stringify({ error: "Error sending job application email. Please try again later." }),
-//     };
-//   }
-// };
-
-// ====================================================
-// const nodemailer = require("nodemailer");
-// require("dotenv").config();
-// const multer = require("multer");
-// const { IncomingForm } = require("formidable");
-
-// // Initialize the multer storage and upload middleware
-// const upload = multer({ storage: multer.memoryStorage() });
+// const s3 = new AWS.S3();
 
 // exports.handler = async (event) => {
 //   // Allow cross-origin requests
 //   const headers = {
-//     "Access-Control-Allow-Origin": "*",
-//     "Access-Control-Allow-Headers": "Content-Type",
-//     "Access-Control-Allow-Methods": "OPTIONS, POST",
+//     'Access-Control-Allow-Origin': '*',
+//     'Access-Control-Allow-Headers': 'Content-Type',
+//     'Access-Control-Allow-Methods': 'OPTIONS, POST',
 //   };
 
-//   // Handle OPTIONS request for preflight CORS checks
-//   if (event.httpMethod === "OPTIONS") {
+//   if (event.httpMethod === 'OPTIONS') {
 //     return {
 //       statusCode: 200,
 //       headers,
@@ -170,168 +100,180 @@
 //     };
 //   }
 
-//   if (event.httpMethod === "POST") {
-//     const form = new IncomingForm();
-//     form.parse(event, (err, fields, files) => {
-//       if (err) {
-//         console.error("Error parsing form:", err);
-//         return {
-//           statusCode: 500,
-//           headers,
-//           body: JSON.stringify({ error: "Error processing form. Please try again later." }),
-//         };
-//       }
+//   try {
+//     const { fullName, email, position, experience, education, english, casteCertificate, salary } = JSON.parse(event.body);
 
-//       const {
-//         fullName,
-//         email,
-//         position,
-//         experience,
-//         education,
-//         english,
-//         casteCertificate,
-//         salary,
-//       } = fields;
+//     // Assuming `resume` is sent directly to S3
+//     const resumeUrl = process.env.S3_BUCKET_URL + '/resume.pdf'; // Example URL, adjust as needed
 
-//       const resume = files.resume;
-
-//       if (!resume) {
-//         return {
-//           statusCode: 400,
-//           headers,
-//           body: JSON.stringify({ error: "No resume file uploaded." }),
-//         };
-//       }
-
-//       // Create reusable transporter object using the default SMTP transport
-//       const transporter = nodemailer.createTransport({
-//         host: process.env.SMTP_HOST,
-//         port: process.env.SMTP_PORT,
-//         secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-//         auth: {
-//           user: process.env.EMAIL_USER,
-//           pass: process.env.EMAIL_PASS,
-//         },
-//       });
-
-//       const mailOptions = {
-//         from: process.env.EMAIL_USER,
-//         to: process.env.TO_EMAIL,
-//         subject: `Job Application: ${position}`,
-//         text: `
-//           Full Name: ${fullName}
-//           Email: ${email}
-//           Position: ${position}
-//           Experience: ${experience}
-//           Education: ${education}
-//           English: ${english}
-//           Caste Certificate: ${casteCertificate}
-//           Last In-Hand Monthly Salary: ${salary}
-//         `,
-//         attachments: [
-//           {
-//             filename: resume.originalFilename,
-//             content: resume.filepath,
-//           },
-//         ],
-//       };
-
-//       transporter.sendMail(mailOptions, (error, info) => {
-//         if (error) {
-//           console.error("Error sending email:", error);
-//           return {
-//             statusCode: 500,
-//             headers,
-//             body: JSON.stringify({ error: "Error sending job application email. Please try again later." }),
-//           };
-//         } else {
-//           return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify({ message: "Job application email sent successfully!" }),
-//           };
-//         }
-//       });
+//     // Create reusable transporter object using the default SMTP transport
+//     const transporter = nodemailer.createTransport({
+//       host: process.env.SMTP_HOST,
+//       port: process.env.SMTP_PORT,
+//       auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASS,
+//       },
 //     });
-//   } else {
-//     // Handle methods other than POST
+
+//     const mailOptions = {
+//       from: process.env.EMAIL_USER,
+//       to: process.env.TO_EMAIL,
+//       subject: `Job Application: ${position}`,
+//       text: `
+//         Full Name: ${fullName}
+//         Email: ${email}
+//         Position: ${position}
+//         Experience: ${experience}
+//         Education: ${education}
+//         English: ${english}
+//         Caste Certificate: ${casteCertificate}
+//         Last In-Hand Monthly Salary: ${salary}
+//         Resume URL: ${resumeUrl}
+//       `,
+//     };
+
+//     await transporter.sendMail(mailOptions);
 //     return {
-//       statusCode: 405,
+//       statusCode: 200,
 //       headers,
-//       body: JSON.stringify({ error: "Method not allowed" }),
+//       body: JSON.stringify({ message: 'Job application email sent successfully!' }),
+//     };
+//   } catch (error) {
+//     console.error('Error sending email:', error);
+//     return {
+//       statusCode: 500,
+//       headers,
+//       body: JSON.stringify({ error: 'Error sending job application email. Please try again later.' }),
 //     };
 //   }
 // };
 
-// =====================================
-const AWS = require('aws-sdk');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
-
-const s3 = new AWS.S3();
+// ==============================
+const nodemailer = require("nodemailer");
+const Busboy = require('busboy');
+require("dotenv").config();
 
 exports.handler = async (event) => {
-  // Allow cross-origin requests
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'OPTIONS, POST',
-  };
+  const { headers } = event;
 
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({}),
-    };
-  }
+  // Create a new promise for handling the response
+  const responsePromise = new Promise((resolve, reject) => {
+    const busboy = new Busboy({ headers: { 'content-type': headers['Content-Type'] } });
+    let fullName = '';
+    let email = '';
+    let position = '';
+    let experience = '';
+    let education = '';
+    let english = '';
+    let casteCertificate = '';
+    let salary = '';
+    let resumeBuffer = null;
+    let resumeFilename = '';
 
-  try {
-    const { fullName, email, position, experience, education, english, casteCertificate, salary } = JSON.parse(event.body);
-
-    // Assuming `resume` is sent directly to S3
-    const resumeUrl = process.env.S3_BUCKET_URL + '/resume.pdf'; // Example URL, adjust as needed
-
-    // Create reusable transporter object using the default SMTP transport
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+    busboy.on('field', (fieldname, val) => {
+      switch (fieldname) {
+        case 'fullName':
+          fullName = val;
+          break;
+        case 'email':
+          email = val;
+          break;
+        case 'position':
+          position = val;
+          break;
+        case 'experience':
+          experience = val;
+          break;
+        case 'education':
+          education = val;
+          break;
+        case 'english':
+          english = val;
+          break;
+        case 'casteCertificate':
+          casteCertificate = val;
+          break;
+        case 'salary':
+          salary = val;
+          break;
+      }
     });
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.TO_EMAIL,
-      subject: `Job Application: ${position}`,
-      text: `
-        Full Name: ${fullName}
-        Email: ${email}
-        Position: ${position}
-        Experience: ${experience}
-        Education: ${education}
-        English: ${english}
-        Caste Certificate: ${casteCertificate}
-        Last In-Hand Monthly Salary: ${salary}
-        Resume URL: ${resumeUrl}
-      `,
-    };
+    busboy.on('file', (fieldname, file, filename) => {
+      if (fieldname === 'resume') {
+        resumeFilename = filename;
+        file.on('data', (data) => {
+          if (resumeBuffer) {
+            resumeBuffer = Buffer.concat([resumeBuffer, data]);
+          } else {
+            resumeBuffer = data;
+          }
+        });
+      }
+    });
 
-    await transporter.sendMail(mailOptions);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: 'Job application email sent successfully!' }),
-    };
-  } catch (error) {
-    console.error('Error sending email:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Error sending job application email. Please try again later.' }),
-    };
-  }
+    busboy.on('finish', async () => {
+      if (!resumeBuffer) {
+        resolve({
+          statusCode: 400,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({ error: "No resume file uploaded." }),
+        });
+        return;
+      }
+
+      // Create reusable transporter object using the default SMTP transport
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: process.env.TO_EMAIL,
+        subject: `Job Application: ${position}`,
+        text: `
+          Full Name: ${fullName}
+          Email: ${email}
+          Position: ${position}
+          Experience: ${experience}
+          Education: ${education}
+          English: ${english}
+          Caste Certificate: ${casteCertificate}
+          Last In-Hand Monthly Salary: ${salary}
+        `,
+        attachments: [
+          {
+            filename: resumeFilename,
+            content: resumeBuffer,
+          },
+        ],
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        resolve({
+          statusCode: 200,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({ message: "Job application email sent successfully!" }),
+        });
+      } catch (error) {
+        console.error("Error sending email:", error);
+        resolve({
+          statusCode: 500,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({ error: "Error sending job application email. Please try again later." }),
+        });
+      }
+    });
+
+    busboy.end(Buffer.from(event.body, 'base64'));
+  });
+
+  return responsePromise;
 };
-
