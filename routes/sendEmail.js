@@ -77,7 +77,7 @@
 // });
 
 // module.exports = router;
-
+// =======================================================
 // const nodemailer = require("nodemailer");
 // require("dotenv").config();
 // const multer = require("multer");
@@ -144,17 +144,24 @@
 //   }
 // };
 
+// ====================================================
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const multer = require("multer");
+const { IncomingForm } = require("formidable");
+
+// Initialize the multer storage and upload middleware
+const upload = multer({ storage: multer.memoryStorage() });
 
 exports.handler = async (event) => {
   // Allow cross-origin requests
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+    "Access-Control-Allow-Methods": "OPTIONS, POST",
   };
 
+  // Handle OPTIONS request for preflight CORS checks
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -163,59 +170,97 @@ exports.handler = async (event) => {
     };
   }
 
-  try {
-    const {
-      companyName,
-      country,
-      fullName,
-      jobTitle,
-      email,
-      mobileNumber,
-      enquiryType,
-      requirement,
-    } = JSON.parse(event.body);
+  if (event.httpMethod === "POST") {
+    const form = new IncomingForm();
+    form.parse(event, (err, fields, files) => {
+      if (err) {
+        console.error("Error parsing form:", err);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Error processing form. Please try again later." }),
+        };
+      }
 
-    // Create reusable transporter object using the default SMTP transport
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+      const {
+        fullName,
+        email,
+        position,
+        experience,
+        education,
+        english,
+        casteCertificate,
+        salary,
+      } = fields;
+
+      const resume = files.resume;
+
+      if (!resume) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "No resume file uploaded." }),
+        };
+      }
+
+      // Create reusable transporter object using the default SMTP transport
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: process.env.TO_EMAIL,
+        subject: `Job Application: ${position}`,
+        text: `
+          Full Name: ${fullName}
+          Email: ${email}
+          Position: ${position}
+          Experience: ${experience}
+          Education: ${education}
+          English: ${english}
+          Caste Certificate: ${casteCertificate}
+          Last In-Hand Monthly Salary: ${salary}
+        `,
+        attachments: [
+          {
+            filename: resume.originalFilename,
+            content: resume.filepath,
+          },
+        ],
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: "Error sending job application email. Please try again later." }),
+          };
+        } else {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ message: "Job application email sent successfully!" }),
+          };
+        }
+      });
     });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.TO_EMAIL,
-      subject: `New Enquiry from ${companyName}`,
-      text: `
-        Company Name: ${companyName}
-        Country: ${country}
-        Full Name: ${fullName}
-        Job Title: ${jobTitle}
-        Email: ${email}
-        Mobile Number: ${mobileNumber}
-        Enquiry Type: ${enquiryType}
-        Requirement: ${requirement}
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
+  } else {
+    // Handle methods other than POST
     return {
-      statusCode: 200,
+      statusCode: 405,
       headers,
-      body: JSON.stringify({ message: "Form submitted successfully!" }),
-    };
-  } catch (error) {
-    console.error("Error sending email:", error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: "Error sending form. Please try again later.",
-      }),
+      body: JSON.stringify({ error: "Method not allowed" }),
     };
   }
 };
+
+
