@@ -51,40 +51,80 @@
 // module.exports = router;
 
 const nodemailer = require("nodemailer");
-require("dotenv").config();
 
-exports.handler = async (event) => {
-  // Parse the request body
-  const { companyName, country, fullName, jobTitle, email, mobileNumber, enquiryType, requirement } = JSON.parse(event.body);
+exports.handler = async function (event, context) {
+  if (event.httpMethod === "POST") {
+    const {
+      companyName,
+      country,
+      fullName,
+      jobTitle,
+      email,
+      mobileNumber,
+      enquiryType,
+      requirement,
+    } = JSON.parse(event.body);
 
-  // Create reusable transporter object using the default SMTP transport
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+    // Configure your SMTP transport
+    let transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.TO_EMAIL, // Replace with your email address
-    subject: "New Form Submission",
-    text: `Company Name: ${companyName}\nCountry: ${country}\nFull Name: ${fullName}\nJob Title: ${jobTitle}\nEmail: ${email}\nMobile Number: ${mobileNumber}\nService Type: ${enquiryType}\nRequirement: ${requirement}`,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Form submitted successfully!" }),
+    // Email options
+    let mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: "process.env.TO_EMAIL",
+      subject: "New Form Submission",
+      text: `
+        Company Name: ${companyName}
+        Country: ${country}
+        Full Name: ${fullName}
+        Job Title: ${jobTitle}
+        Email: ${email}
+        Mobile Number: ${mobileNumber}
+        Service Type: ${enquiryType}
+        Requirement: ${requirement}
+      `,
     };
-  } catch (error) {
-    console.error("Error sending email:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Error sending email. Please try again later." }),
-    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*", // Allow all origins
+          "Access-Control-Allow-Methods": "OPTIONS, POST, GET", // Allow specific methods
+          "Access-Control-Allow-Headers": "Content-Type", // Allow specific headers
+        },
+        body: JSON.stringify({ message: "Form submitted successfully!" }),
+      };
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return {
+        statusCode: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+        body: JSON.stringify({
+          error: "Error sending form. Please try again later.",
+        }),
+      };
+    }
   }
+
+  return {
+    statusCode: 405,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+    body: JSON.stringify({ error: "Method not allowed" }),
+  };
 };
