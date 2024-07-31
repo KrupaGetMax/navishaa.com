@@ -97,7 +97,7 @@ exports.handler = async function (event, context) {
 
     let mailOptions = {
       from: process.env.EMAIL_USER, // Sender's email address
-      to: "process.env.TO_EMAIL", // Recipient's email address
+      to: "kripa06.sagar@gmail.com", // Recipient's email address
       subject: "New Form Submission",
       text: `
         Company Name: ${companyName}
