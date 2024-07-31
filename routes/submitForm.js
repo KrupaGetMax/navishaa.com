@@ -80,21 +80,23 @@ exports.handler = async function (event, context) {
         statusCode: 400,
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Methods": "OPTIONS, POST",
           "Access-Control-Allow-Headers": "Content-Type",
         },
         body: JSON.stringify({ error: "Missing required fields" }),
       };
     }
 
+    // Create a transporter object
     let transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // Ensure this environment variable is set in Netlify
+        pass: process.env.EMAIL_PASS, // Ensure this environment variable is set in Netlify
       },
     });
 
+    // Email options
     let mailOptions = {
       from: process.env.EMAIL_USER, // Sender's email address
       to: "kripa06.sagar@gmail.com", // Recipient's email address
@@ -118,7 +120,7 @@ exports.handler = async function (event, context) {
         statusCode: 200,
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Methods": "OPTIONS, POST",
           "Access-Control-Allow-Headers": "Content-Type",
         },
         body: JSON.stringify({ message: "Form submitted successfully!" }),
@@ -129,7 +131,7 @@ exports.handler = async function (event, context) {
         statusCode: 500,
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+          "Access-Control-Allow-Methods": "OPTIONS, POST",
           "Access-Control-Allow-Headers": "Content-Type",
         },
         body: JSON.stringify({
@@ -139,11 +141,12 @@ exports.handler = async function (event, context) {
     }
   }
 
+  // Handle methods other than POST
   return {
     statusCode: 405,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "OPTIONS, POST, GET",
+      "Access-Control-Allow-Methods": "OPTIONS, POST",
       "Access-Control-Allow-Headers": "Content-Type",
     },
     body: JSON.stringify({ error: "Method not allowed" }),
