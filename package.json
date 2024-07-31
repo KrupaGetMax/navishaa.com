@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "aws-sdk": "^2.1665.0",
+    "aws-serverless-express": "^3.4.0",
     "body-parser": "^1.20.2",
     "busboy": "^1.6.0",
     "cors": "^2.8.5",
