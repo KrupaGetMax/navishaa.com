@@ -250,7 +250,7 @@ exports.handler = async (event, context) => {
 
     return new Promise((resolve, reject) => {
       // Use multer to handle the form data and file
-      upload.single("resume")(bodyStream, {}, async (err) => {
+      upload.single('resume')(bodyStream, {}, async (err) => {
         if (err) {
           return resolve({
             statusCode: 500,
@@ -270,7 +270,7 @@ exports.handler = async (event, context) => {
           education,
           english,
           casteCertificate,
-          salary,
+          salary
         } = formData;
 
         if (
@@ -316,14 +316,12 @@ exports.handler = async (event, context) => {
             Caste Certificate: ${casteCertificate}
             Last In-Hand Monthly Salary: ${salary}
           `,
-          attachments: req.file
-            ? [
-                {
-                  filename: req.file.originalname,
-                  content: req.file.buffer,
-                },
-              ]
-            : [],
+          attachments: req.file ? [
+            {
+              filename: req.file.originalname,
+              content: req.file.buffer,
+            },
+          ] : [],
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -350,3 +348,4 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ error: "Method not allowed" }),
   };
 };
+
