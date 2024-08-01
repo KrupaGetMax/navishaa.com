@@ -100,7 +100,7 @@
 //     body: JSON.stringify({ error: "Method not allowed" }),
 //   };
 // };
-
+// ---------------------------------------------------------------
 const nodemailer = require("nodemailer");
 
 exports.handler = async function (event, context) {
@@ -217,3 +217,4 @@ exports.handler = async function (event, context) {
     body: JSON.stringify({ error: "Method not allowed" }),
   };
 };
+
