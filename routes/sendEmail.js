@@ -331,9 +331,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Handle POST request here
-  // ...
-};
 
 
   // Handle POST method
