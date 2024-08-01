@@ -246,14 +246,17 @@ exports.handler = async (event, context) => {
     return new Promise((resolve, reject) => {
       form.parse(event, (err, fields, files) => {
         if (err) {
-          return reject({
+          console.error("Error parsing form:", err);
+          return resolve({
             statusCode: 500,
             headers: corsHeaders,
             body: JSON.stringify({ error: "Error parsing form" }),
           });
         }
 
-        // Validate input fields
+        console.log("Parsed fields:", fields);
+        console.log("Parsed files:", files);
+
         const {
           fullName,
           email,
@@ -282,18 +285,16 @@ exports.handler = async (event, context) => {
           });
         }
 
-        // Create a transporter object
         let transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
+          secure: process.env.SMTP_PORT == 465,
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
           },
         });
 
-        // Email options
         let mailOptions = {
           from: process.env.EMAIL_USER,
           to: process.env.TO_EMAIL,
@@ -318,6 +319,7 @@ exports.handler = async (event, context) => {
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
+            console.error("Error sending email:", error);
             return resolve({
               statusCode: 500,
               headers: corsHeaders,
