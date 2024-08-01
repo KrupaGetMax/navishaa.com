@@ -222,17 +222,10 @@
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const { Readable } = require("stream");
+const { parse } = require("querystring");
 
 // Configure multer for file handling
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Specify the directory to store files
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname); // Use the original file name
-  },
-});
-
+const storage = multer.memoryStorage(); // Use memory storage for handling files in memory
 const upload = multer({ storage: storage });
 
 exports.handler = async (event, context) => {
@@ -251,13 +244,12 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === "POST") {
-    // Convert event body to a readable stream
     const bodyStream = new Readable();
     bodyStream.push(event.body);
     bodyStream.push(null);
 
     return new Promise((resolve, reject) => {
-      // Handle form data with multer
+      // Use multer to handle the form data and file
       upload.single("resume")(bodyStream, {}, async (err) => {
         if (err) {
           return resolve({
@@ -267,17 +259,19 @@ exports.handler = async (event, context) => {
           });
         }
 
-        const formData = new URLSearchParams(event.body); // Parse form data from URL-encoded format
+        // Parse form fields from the request body
+        const formData = parse(event.body);
 
-        // Extract fields from form data
-        const fullName = formData.get("fullName");
-        const email = formData.get("email");
-        const position = formData.get("position");
-        const experience = formData.get("experience");
-        const education = formData.get("education");
-        const english = formData.get("english");
-        const casteCertificate = formData.get("casteCertificate");
-        const salary = formData.get("salary");
+        const {
+          fullName,
+          email,
+          position,
+          experience,
+          education,
+          english,
+          casteCertificate,
+          salary,
+        } = formData;
 
         if (
           !email ||
@@ -300,7 +294,7 @@ exports.handler = async (event, context) => {
         let transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_PORT == 465,
+          secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -326,7 +320,7 @@ exports.handler = async (event, context) => {
             ? [
                 {
                   filename: req.file.originalname,
-                  path: req.file.path,
+                  content: req.file.buffer,
                 },
               ]
             : [],
