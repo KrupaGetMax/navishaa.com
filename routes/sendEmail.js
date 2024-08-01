@@ -220,8 +220,20 @@
 // };
 
 const nodemailer = require("nodemailer");
-const formidable = require("formidable");
-const fs = require("fs");
+const multer = require("multer");
+const { Readable } = require("stream");
+
+// Configure multer for file handling
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Specify the directory to store files
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // Use the original file name
+  },
+});
+
+const upload = multer({ storage: storage });
 
 exports.handler = async (event, context) => {
   const corsHeaders = {
@@ -239,35 +251,33 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === "POST") {
-    // Netlify functions don't provide req.on; use formidable to parse
-    const form = new formidable.IncomingForm();
-    form.uploadDir = "./uploads";
-    form.keepExtensions = true;
-
-    // Use the 'body' property from the event object
-    const data = Buffer.from(event.body, "base64").toString("utf8");
+    // Convert event body to a readable stream
+    const bodyStream = new Readable();
+    bodyStream.push(event.body);
+    bodyStream.push(null);
 
     return new Promise((resolve, reject) => {
-      form.parse(data, (err, fields, files) => {
+      // Handle form data with multer
+      upload.single("resume")(bodyStream, {}, async (err) => {
         if (err) {
-          return reject({
+          return resolve({
             statusCode: 500,
             headers: corsHeaders,
             body: JSON.stringify({ error: "Error parsing form" }),
           });
         }
 
-        // Validate input fields
-        const {
-          fullName,
-          email,
-          position,
-          experience,
-          education,
-          english,
-          casteCertificate,
-          salary,
-        } = fields;
+        const formData = new URLSearchParams(event.body); // Parse form data from URL-encoded format
+
+        // Extract fields from form data
+        const fullName = formData.get("fullName");
+        const email = formData.get("email");
+        const position = formData.get("position");
+        const experience = formData.get("experience");
+        const education = formData.get("education");
+        const english = formData.get("english");
+        const casteCertificate = formData.get("casteCertificate");
+        const salary = formData.get("salary");
 
         if (
           !email ||
@@ -312,12 +322,14 @@ exports.handler = async (event, context) => {
             Caste Certificate: ${casteCertificate}
             Last In-Hand Monthly Salary: ${salary}
           `,
-          attachments: [
-            {
-              filename: files.resume[0].originalFilename,
-              path: files.resume[0].filepath,
-            },
-          ],
+          attachments: req.file
+            ? [
+                {
+                  filename: req.file.originalname,
+                  path: req.file.path,
+                },
+              ]
+            : [],
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
