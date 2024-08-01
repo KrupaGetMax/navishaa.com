@@ -239,24 +239,25 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === "POST") {
+    // Netlify functions don't provide req.on; use formidable to parse
     const form = new formidable.IncomingForm();
-    form.uploadDir = "./uploads"; // Directory to store files temporarily
+    form.uploadDir = "./uploads";
     form.keepExtensions = true;
 
+    // Use the 'body' property from the event object
+    const data = Buffer.from(event.body, "base64").toString("utf8");
+
     return new Promise((resolve, reject) => {
-      form.parse(event, (err, fields, files) => {
+      form.parse(data, (err, fields, files) => {
         if (err) {
-          console.error("Error parsing form:", err);
-          return resolve({
+          return reject({
             statusCode: 500,
             headers: corsHeaders,
             body: JSON.stringify({ error: "Error parsing form" }),
           });
         }
 
-        console.log("Parsed fields:", fields);
-        console.log("Parsed files:", files);
-
+        // Validate input fields
         const {
           fullName,
           email,
@@ -285,6 +286,7 @@ exports.handler = async (event, context) => {
           });
         }
 
+        // Create a transporter object
         let transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT,
@@ -295,6 +297,7 @@ exports.handler = async (event, context) => {
           },
         });
 
+        // Email options
         let mailOptions = {
           from: process.env.EMAIL_USER,
           to: process.env.TO_EMAIL,
@@ -319,7 +322,6 @@ exports.handler = async (event, context) => {
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
-            console.error("Error sending email:", error);
             return resolve({
               statusCode: 500,
               headers: corsHeaders,
