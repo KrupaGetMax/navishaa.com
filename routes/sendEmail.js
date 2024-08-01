@@ -318,19 +318,23 @@
 // =======================================================
 const nodemailer = require("nodemailer");
 
-exports.handler = async function (event, context) {
-  // Handle OPTIONS method
+exports.handler = async (event, context) => {
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS, POST",
         "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify({}),
+      body: "",
     };
   }
+
+  // Handle POST request here
+  // ...
+};
+
 
   // Handle POST method
   if (event.httpMethod === "POST") {
